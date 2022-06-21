@@ -1,7 +1,7 @@
 import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { FixedSizeGrid } from "react-window";
 
 const MIN_MEMORY = 1024;
@@ -26,7 +26,26 @@ function App() {
   const [parallelism, setParallelism] = useState(MIN_PARALLELISM);
   const [variant, setVariant] = useState(DEFAULT_VARIANT);
   const [started, setStarted] = useState(false);
+  const containerRef = useRef(null);
 
+  const containerDimensions = useMemo(() => {
+    if (containerRef.current) {
+      const containerStyle = getComputedStyle(containerRef.current);
+      const paddingX =
+        parseFloat(containerStyle.paddingLeft) +
+        parseFloat(containerStyle.paddingRight);
+      const paddingY =
+        parseFloat(containerStyle.paddingTop) +
+        parseFloat(containerStyle.paddingBottom);
+
+      return {
+        width: containerRef.current.clientWidth - paddingX,
+        height: containerRef.current.clientHeight - paddingY,
+      };
+    }
+    return { width: 0, height: 0 };
+  }, [containerRef.current]);
+  console.log(containerDimensions);
   const [currentIteration, setCurrentIteration] = useState(1);
   const q = useMemo(
     () => Math.floor(memory / parallelism),
@@ -60,7 +79,8 @@ function App() {
   };
 
   return (
-    <Container className="mt-4">
+    <Container ref={containerRef} className="mt-4">
+      <h1 className="text-center">Argon2 Visualizer</h1>
       <Form onSubmit={startAlgorithm}>
         <Form.Group className="mb-3">
           <Form.Label>Argon2 Variant</Form.Label>
@@ -128,7 +148,7 @@ function App() {
             columnCount={q}
             rowCount={parallelism}
             height={200}
-            width={700}
+            width={containerDimensions?.width}
             columnWidth={300}
             rowHeight={35}
             className="mt-4"
