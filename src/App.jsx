@@ -10,6 +10,10 @@ const MIN_MEMORY = 1024;
 const MIN_ITERATIONS = 1;
 const MIN_PARALLELISM = 1;
 const DEFAULT_VARIANT = "i";
+const FIRST_COLUMN = 1;
+const SECOND_COLUMN = 2;
+const HEADER_COLUMN = 0;
+const HEADER_ROW = 0;
 
 const FORMULA_T_EQUALS_1 = {
   "[i][0]": (i) => `G(H0, ${i})`,
@@ -48,10 +52,15 @@ function App() {
   }, [containerRef.current]);
 
   const [currentIteration, setCurrentIteration] = useState(1);
+
   const q = useMemo(
     () => Math.floor(memory / parallelism),
     [memory, parallelism]
   );
+
+  const rowCount = useMemo(() => parallelism + 1, [parallelism]);
+
+  const columnCount = useMemo(() => q + 1, [q]);
 
   const startAlgorithm = (e) => {
     e.preventDefault();
@@ -60,20 +69,29 @@ function App() {
   };
 
   const drawCell = (columnIndex, rowIndex) => {
-    let cell = `B[${rowIndex}][${columnIndex}]=`;
+    if (columnIndex === HEADER_COLUMN && rowIndex === HEADER_ROW) {
+      return "Row / Column";
+    }
+    if (columnIndex === HEADER_COLUMN) {
+      return rowIndex - 1;
+    }
+    if (rowIndex === HEADER_ROW) {
+      return columnIndex - 1;
+    }
+    let cell = `B[${rowIndex - 1}][${columnIndex - 1}]=`;
     if (currentIteration === 1) {
-      if (columnIndex === 0) {
-        cell += FORMULA_T_EQUALS_1["[i][0]"](rowIndex);
-      } else if (columnIndex === 1) {
-        cell += FORMULA_T_EQUALS_1["[i][1]"](rowIndex);
+      if (columnIndex === FIRST_COLUMN) {
+        cell += FORMULA_T_EQUALS_1["[i][0]"](rowIndex - 1);
+      } else if (columnIndex === SECOND_COLUMN) {
+        cell += FORMULA_T_EQUALS_1["[i][1]"](rowIndex - 1);
       } else {
-        cell += FORMULA_T_EQUALS_1["[i][j]"](rowIndex, columnIndex);
+        cell += FORMULA_T_EQUALS_1["[i][j]"](rowIndex - 1, columnIndex - 1);
       }
     } else {
-      if (columnIndex === 0) {
-        cell += FORMULA_T_LARGER_1["[i][0]"](rowIndex, q);
+      if (columnIndex === 1) {
+        cell += FORMULA_T_LARGER_1["[i][0]"](rowIndex - 1, q);
       } else {
-        cell += FORMULA_T_LARGER_1["[i][j]"](rowIndex, columnIndex);
+        cell += FORMULA_T_LARGER_1["[i][j]"](rowIndex - 1, columnIndex - 1);
       }
     }
     return cell;
@@ -122,7 +140,7 @@ function App() {
             min={1}
             placeholder="Parallelism"
             value={parallelism}
-            onChange={(e) => setParallelism(e.target.value)}
+            onChange={(e) => setParallelism(Number(e.target.value))}
           />
         </Form.Group>
         <Button variant="primary" type="submit">
@@ -145,17 +163,26 @@ function App() {
           >
             Next
           </Button>
+          <h4 className="my-4">Memory Table</h4>
           <FixedSizeGrid
-            columnCount={q}
-            rowCount={parallelism}
-            height={200}
+            columnCount={columnCount}
+            rowCount={rowCount}
+            height={300}
             width={containerDimensions?.width}
             columnWidth={300}
             rowHeight={35}
-            className="mt-4"
           >
             {({ columnIndex, rowIndex, style }) => (
-              <div className="border" style={style}>
+              <div
+                className="border"
+                style={{
+                  ...style,
+                  backgroundColor:
+                    columnIndex === HEADER_COLUMN || rowIndex === HEADER_ROW
+                      ? "#f5f5f5"
+                      : "#fff",
+                }}
+              >
                 {drawCell(columnIndex, rowIndex)}
               </div>
             )}
