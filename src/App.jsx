@@ -4,6 +4,7 @@ import Form from "react-bootstrap/Form";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FixedSizeGrid } from "react-window";
 import "./App.css";
+import ResizeObserver from "resize-observer-polyfill";
 
 const MIN_MEMORY = 1024;
 const MIN_ITERATIONS = 1;
