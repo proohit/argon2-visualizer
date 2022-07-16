@@ -1,7 +1,7 @@
 import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FixedSizeGrid } from "react-window";
 import "./App.css";
 
@@ -28,25 +28,24 @@ function App() {
   const [variant, setVariant] = useState(DEFAULT_VARIANT);
   const [started, setStarted] = useState(false);
   const containerRef = useRef(null);
+  const [containerDimensions, setContainerDimensions] = useState({ width: 0 });
 
-  const containerDimensions = useMemo(() => {
+  useEffect(() => {
     if (containerRef.current) {
-      const containerStyle = getComputedStyle(containerRef.current);
-      const paddingX =
-        parseFloat(containerStyle.paddingLeft) +
-        parseFloat(containerStyle.paddingRight);
-      const paddingY =
-        parseFloat(containerStyle.paddingTop) +
-        parseFloat(containerStyle.paddingBottom);
-
-      return {
-        width: containerRef.current.clientWidth - paddingX,
-        height: containerRef.current.clientHeight - paddingY,
-      };
+      const observer = new ResizeObserver(
+        (entries) => {
+          const [entry] = entries;
+          const { width } = entry.contentRect;
+          setContainerDimensions({ width });
+        },
+        {
+          threshold: 0,
+        }
+      );
+      observer.observe(containerRef.current);
     }
-    return { width: 0, height: 0 };
   }, [containerRef.current]);
-  console.log(containerDimensions);
+
   const [currentIteration, setCurrentIteration] = useState(1);
   const q = useMemo(
     () => Math.floor(memory / parallelism),
