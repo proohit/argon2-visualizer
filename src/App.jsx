@@ -3,6 +3,7 @@ import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useMemo, useRef, useState } from "react";
 import { FixedSizeGrid } from "react-window";
+import "./App.css";
 
 const MIN_MEMORY = 1024;
 const MIN_ITERATIONS = 1;
