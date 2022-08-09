@@ -27,13 +27,29 @@ const FORMULA_T_LARGER_1 = {
 };
 
 function App() {
-  const [memory, setMemory] = useState(MIN_MEMORY);
-  const [iterations, setIterations] = useState(MIN_ITERATIONS);
-  const [parallelism, setParallelism] = useState(MIN_PARALLELISM);
-  const [variant, setVariant] = useState(DEFAULT_VARIANT);
+  const [argon2Params, setArgon2Params] = useState({
+    memory: MIN_MEMORY,
+    iterations: MIN_ITERATIONS,
+    parallelism: MIN_PARALLELISM,
+    variant: DEFAULT_VARIANT,
+  });
+
+  const [runningParams, setRunningParams] = useState({
+    ...argon2Params,
+    currentIteration: 1,
+  });
   const [started, setStarted] = useState(false);
+
   const containerRef = useRef(null);
   const [containerDimensions, setContainerDimensions] = useState({ width: 0 });
+
+  const setArgon2Param = (param, value) => {
+    setArgon2Params({ ...argon2Params, [param]: value });
+  };
+
+  const setRunningParam = (param, value) => {
+    setRunningParams({ ...runningParams, [param]: value });
+  };
 
   useEffect(() => {
     if (containerRef.current) {
@@ -51,22 +67,140 @@ function App() {
     }
   }, [containerRef.current]);
 
-  const [currentIteration, setCurrentIteration] = useState(1);
+  const startAlgorithm = (e, params) => {
+    e.preventDefault();
+    setRunningParams({ ...params, currentIteration: 1 });
+    setStarted(true);
+  };
 
-  const q = useMemo(
-    () => Math.floor(memory / parallelism),
-    [memory, parallelism]
+  console.log(containerDimensions);
+
+  return (
+    <Container ref={containerRef} className="mt-4">
+      <h1 className="text-center">Argon2 Visualizer</h1>
+      <Form onSubmit={(e) => startAlgorithm(e, argon2Params)}>
+        <Form.Group className="mb-3">
+          <Form.Label>Argon2 Variant</Form.Label>
+          <Form.Select
+            value={argon2Params.variant}
+            onChange={(e) => setArgon2Param("variant", e.target.value)}
+          >
+            <option value="i">Argon2i</option>
+            <option value="d">Argon2d</option>
+            <option value="id">Argon2id</option>
+          </Form.Select>
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Memory (KB)</Form.Label>
+          <Form.Control
+            type="number"
+            min={MIN_MEMORY}
+            placeholder="Memory"
+            value={argon2Params.memory}
+            onChange={(e) => setArgon2Param("memory", e.target.value)}
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Iterations</Form.Label>
+          <Form.Control
+            type="number"
+            min={1}
+            placeholder="Iterations"
+            value={argon2Params.iterations}
+            onChange={(e) => setArgon2Param("iterations", e.target.value)}
+          />
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label>Parallelism</Form.Label>
+          <Form.Control
+            type="number"
+            min={1}
+            placeholder="Parallelism"
+            value={argon2Params.parallelism}
+            onChange={(e) =>
+              setArgon2Param("parallelism", Number(e.target.value))
+            }
+          />
+        </Form.Group>
+        <Button variant="primary" type="submit">
+          Submit
+        </Button>
+      </Form>
+
+      {started && (
+        <div>
+          <IterationControls
+            runningParams={runningParams}
+            setRunningParam={setRunningParam}
+          />
+          <MemoryTable
+            runningParams={runningParams}
+            width={containerDimensions?.width}
+          />
+        </div>
+      )}
+    </Container>
+  );
+}
+
+export default App;
+
+const IterationControls = (props) => {
+  const { runningParams, setRunningParam } = props;
+
+  const hasNextIteration = useMemo(
+    () => runningParams.currentIteration < runningParams.iterations,
+    [runningParams.currentIteration, runningParams.iterations]
+  );
+  const hasPreviousIteration = useMemo(
+    () => runningParams.currentIteration > 1,
+    [runningParams.currentIteration]
   );
 
-  const rowCount = useMemo(() => parallelism + 1, [parallelism]);
+  return (
+    <>
+      <p>Current Iteration: {runningParams.currentIteration}</p>
+      <Button
+        disabled={!hasPreviousIteration}
+        onClick={() =>
+          setRunningParam(
+            "currentIteration",
+            runningParams.currentIteration - 1
+          )
+        }
+      >
+        Previous
+      </Button>
+      <Button
+        disabled={!hasNextIteration}
+        onClick={() =>
+          setRunningParam(
+            "currentIteration",
+            runningParams.currentIteration + 1
+          )
+        }
+      >
+        Next
+      </Button>
+    </>
+  );
+};
+
+const MemoryTable = (props) => {
+  const { runningParams, width } = props;
+
+  const q = useMemo(
+    () => Math.floor(runningParams.memory / runningParams.parallelism),
+    [runningParams.memory, runningParams.parallelism]
+  );
+
+  const rowCount = useMemo(
+    () => runningParams.parallelism + 1,
+    [runningParams.parallelism]
+  );
 
   const columnCount = useMemo(() => q + 1, [q]);
-
-  const startAlgorithm = (e) => {
-    e.preventDefault();
-    setStarted(true);
-    setCurrentIteration(1);
-  };
 
   const drawCell = (columnIndex, rowIndex) => {
     if (columnIndex === HEADER_COLUMN && rowIndex === HEADER_ROW) {
@@ -79,7 +213,7 @@ function App() {
       return columnIndex - 1;
     }
     let cell = `B[${rowIndex - 1}][${columnIndex - 1}]=`;
-    if (currentIteration === 1) {
+    if (runningParams.currentIteration === 1) {
       if (columnIndex === FIRST_COLUMN) {
         cell += FORMULA_T_EQUALS_1["[i][0]"](rowIndex - 1);
       } else if (columnIndex === SECOND_COLUMN) {
@@ -98,99 +232,31 @@ function App() {
   };
 
   return (
-    <Container ref={containerRef} className="mt-4">
-      <h1 className="text-center">Argon2 Visualizer</h1>
-      <Form onSubmit={startAlgorithm}>
-        <Form.Group className="mb-3">
-          <Form.Label>Argon2 Variant</Form.Label>
-          <Form.Select
-            value={variant}
-            onChange={(e) => setVariant(e.target.value)}
+    <>
+      <h4 className="my-4">Memory Table</h4>
+      <FixedSizeGrid
+        columnCount={columnCount}
+        rowCount={rowCount}
+        height={300}
+        width={width}
+        columnWidth={300}
+        rowHeight={35}
+      >
+        {({ columnIndex, rowIndex, style }) => (
+          <div
+            className="border"
+            style={{
+              ...style,
+              backgroundColor:
+                columnIndex === HEADER_COLUMN || rowIndex === HEADER_ROW
+                  ? "#f5f5f5"
+                  : "#fff",
+            }}
           >
-            <option value="i">Argon2i</option>
-            <option value="d">Argon2d</option>
-            <option value="id">Argon2id</option>
-          </Form.Select>
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Memory (KB)</Form.Label>
-          <Form.Control
-            type="number"
-            min={MIN_MEMORY}
-            placeholder="Memory"
-            value={memory}
-            onChange={(e) => setMemory(e.target.value)}
-          />
-        </Form.Group>
-
-        <Form.Group className="mb-3">
-          <Form.Label>Iterations</Form.Label>
-          <Form.Control
-            type="number"
-            min={1}
-            placeholder="Iterations"
-            value={iterations}
-            onChange={(e) => setIterations(e.target.value)}
-          />
-        </Form.Group>
-        <Form.Group className="mb-3">
-          <Form.Label>Parallelism</Form.Label>
-          <Form.Control
-            type="number"
-            min={1}
-            placeholder="Parallelism"
-            value={parallelism}
-            onChange={(e) => setParallelism(Number(e.target.value))}
-          />
-        </Form.Group>
-        <Button variant="primary" type="submit">
-          Submit
-        </Button>
-      </Form>
-
-      {started && (
-        <div>
-          <p>Current Iteration: {currentIteration}</p>
-          <Button
-            disabled={currentIteration === 1}
-            onClick={() => setCurrentIteration(currentIteration - 1)}
-          >
-            Previous
-          </Button>
-          <Button
-            disabled={currentIteration === iterations}
-            onClick={() => setCurrentIteration(currentIteration + 1)}
-          >
-            Next
-          </Button>
-          <h4 className="my-4">Memory Table</h4>
-          <FixedSizeGrid
-            columnCount={columnCount}
-            rowCount={rowCount}
-            height={300}
-            width={containerDimensions?.width}
-            columnWidth={300}
-            rowHeight={35}
-          >
-            {({ columnIndex, rowIndex, style }) => (
-              <div
-                className="border"
-                style={{
-                  ...style,
-                  backgroundColor:
-                    columnIndex === HEADER_COLUMN || rowIndex === HEADER_ROW
-                      ? "#f5f5f5"
-                      : "#fff",
-                }}
-              >
-                {drawCell(columnIndex, rowIndex)}
-              </div>
-            )}
-          </FixedSizeGrid>
-        </div>
-      )}
-    </Container>
+            {drawCell(columnIndex, rowIndex)}
+          </div>
+        )}
+      </FixedSizeGrid>
+    </>
   );
-}
-
-export default App;
+};
