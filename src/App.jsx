@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FixedSizeGrid } from "react-window";
 import "./App.css";
 import ResizeObserver from "resize-observer-polyfill";
+import { hash_encoded_js } from "rust-argon2";
 
 const MIN_MEMORY = 1024;
 const MIN_ITERATIONS = 1;
@@ -71,9 +72,20 @@ function App() {
     e.preventDefault();
     setRunningParams({ ...params, currentIteration: 1 });
     setStarted(true);
+    console.log(
+      hash_encoded_js(
+        "password",
+        "salt",
+        JSON.stringify({
+          hash_length: "32",
+          parallelism: argon2Params.parallelism.toString(),
+          memory: argon2Params.memory.toString(),
+          iterations: argon2Params.iterations.toString(),
+          variant: argon2Params.variant,
+        })
+      )
+    );
   };
-
-  console.log(containerDimensions);
 
   return (
     <Container ref={containerRef} className="mt-4">
@@ -85,9 +97,9 @@ function App() {
             value={argon2Params.variant}
             onChange={(e) => setArgon2Param("variant", e.target.value)}
           >
-            <option value="i">Argon2i</option>
-            <option value="d">Argon2d</option>
-            <option value="id">Argon2id</option>
+            <option value="Argon2i">Argon2i</option>
+            <option value="Argon2d">Argon2d</option>
+            <option value="Argon2id">Argon2id</option>
           </Form.Select>
         </Form.Group>
         <Form.Group className="mb-3">
