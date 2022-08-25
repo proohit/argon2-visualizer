@@ -10,7 +10,7 @@ import { hash_encoded_js } from "rust-argon2";
 const MIN_MEMORY = 1024;
 const MIN_ITERATIONS = 1;
 const MIN_PARALLELISM = 1;
-const DEFAULT_VARIANT = "i";
+const DEFAULT_VARIANT = "Argon2id";
 const FIRST_COLUMN = 1;
 const SECOND_COLUMN = 2;
 const HEADER_COLUMN = 0;
@@ -75,7 +75,7 @@ function App() {
     console.log(
       hash_encoded_js(
         "password",
-        "salt",
+        "salt11bytes",
         JSON.stringify({
           hash_length: "32",
           parallelism: argon2Params.parallelism.toString(),
