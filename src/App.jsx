@@ -73,16 +73,18 @@ function App() {
     setRunningParams({ ...params, currentIteration: 1 });
     setStarted(true);
     console.log(
-      hash_encoded_js(
-        "password",
-        "salt11bytes",
-        JSON.stringify({
-          hash_length: "32",
-          parallelism: argon2Params.parallelism.toString(),
-          memory: argon2Params.memory.toString(),
-          iterations: argon2Params.iterations.toString(),
-          variant: argon2Params.variant,
-        })
+      JSON.parse(
+        hash_encoded_js(
+          "password",
+          "salt11bytes",
+          JSON.stringify({
+            hash_length: "32",
+            parallelism: argon2Params.parallelism.toString(),
+            memory: argon2Params.memory.toString(),
+            iterations: argon2Params.iterations.toString(),
+            variant: argon2Params.variant,
+          })
+        )
       )
     );
   };
