@@ -1,3 +1,4 @@
 [submodule "rust-argon2"]
-	path = rust-argon2
-	url = git@github.com:proohit/rust-argon2.git
+path = rust-argon2
+url = git@github.com:proohit/rust-argon2.git
+branch = develop
