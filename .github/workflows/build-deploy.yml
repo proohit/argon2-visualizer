@@ -21,6 +21,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: true
       - name: Setup Node.js environment
         uses: actions/setup-node@v3.4.1
         with:
