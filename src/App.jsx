@@ -19,7 +19,7 @@ const HEADER_ROW = 0;
 const FORMULA_T_EQUALS_1 = {
   "[i][0]": (i) => `G(H0, ${i})`,
   "[i][1]": (i) => `G(H1, ${i})`,
-  "[i][j]": (i, j) => `G(B[${i}][${j - 1}], B[i'][j'])`,
+  "[i][j]": (i, j, i_, j_) => `G(B[${i}][${j - 1}], B[${i_}][${j_}])`,
 };
 
 const FORMULA_T_LARGER_1 = {
@@ -39,6 +39,8 @@ function App() {
     ...argon2Params,
     currentIteration: 1,
   });
+
+  const [result, setResult] = useState(null);
   const [started, setStarted] = useState(false);
 
   const containerRef = useRef(null);
@@ -80,7 +82,7 @@ function App() {
       variant: params.variant,
     });
 
-    console.log(JSON.parse(hash_encoded_js("password", "salt11bytes", config)));
+    setResult(JSON.parse(hash_encoded_js("password", "salt11bytes", config)));
   };
 
   return (
@@ -147,6 +149,7 @@ function App() {
           <MemoryTable
             runningParams={runningParams}
             width={containerDimensions?.width}
+            result={result}
           />
         </div>
       )}
@@ -198,7 +201,7 @@ const IterationControls = (props) => {
 };
 
 const MemoryTable = (props) => {
-  const { runningParams, width } = props;
+  const { runningParams, width, result } = props;
 
   const q = useMemo(
     () => Math.floor(runningParams.memory / runningParams.parallelism),
@@ -222,14 +225,26 @@ const MemoryTable = (props) => {
     if (rowIndex === HEADER_ROW) {
       return columnIndex - 1;
     }
-    let cell = `B[${rowIndex - 1}][${columnIndex - 1}]=`;
+    let cellRef = `B[${rowIndex - 1}][${columnIndex - 1}]`;
+    let cell = `${cellRef}=`;
+    let i_ = "";
+    let j_ = "";
+    if (result && result.state.hash_map[cellRef]) {
+      i_ = result.state.hash_map[cellRef].ref_lane;
+      j_ = result.state.hash_map[cellRef].ref_index;
+    }
     if (runningParams.currentIteration === 1) {
       if (columnIndex === FIRST_COLUMN) {
         cell += FORMULA_T_EQUALS_1["[i][0]"](rowIndex - 1);
       } else if (columnIndex === SECOND_COLUMN) {
         cell += FORMULA_T_EQUALS_1["[i][1]"](rowIndex - 1);
       } else {
-        cell += FORMULA_T_EQUALS_1["[i][j]"](rowIndex - 1, columnIndex - 1);
+        cell += FORMULA_T_EQUALS_1["[i][j]"](
+          rowIndex - 1,
+          columnIndex - 1,
+          i_,
+          j_
+        );
       }
     } else {
       if (columnIndex === 1) {
