@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FixedSizeGrid } from "react-window";
 import "./App.css";
 import ResizeObserver from "resize-observer-polyfill";
-import { hash_encoded_js } from "rust-argon2";
+import { hash_encoded_js, create_default_config } from "rust-argon2";
 
 const MIN_MEMORY = 1024;
 const MIN_ITERATIONS = 1;
@@ -74,17 +74,7 @@ function App() {
     setStarted(true);
     console.log(
       JSON.parse(
-        hash_encoded_js(
-          "password",
-          "salt11bytes",
-          JSON.stringify({
-            hash_length: "32",
-            parallelism: argon2Params.parallelism.toString(),
-            memory: argon2Params.memory.toString(),
-            iterations: argon2Params.iterations.toString(),
-            variant: argon2Params.variant,
-          })
-        )
+        hash_encoded_js("password", "salt11bytes", create_default_config())
       )
     );
   };
