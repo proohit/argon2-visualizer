@@ -72,13 +72,17 @@ function App() {
     e.preventDefault();
     setRunningParams({ ...params, currentIteration: 1 });
     setStarted(true);
-    console.log(
-      JSON.parse(
-        hash_encoded_js("password", "salt11bytes", create_default_config())
-      )
-    );
-  };
+    const config = JSON.stringify({
+      ...JSON.parse(create_default_config()),
+      memory: params.memory.toString(),
+      iterations: params.iterations.toString(),
+      parallelism: params.parallelism.toString(),
+      variant: params.variant,
+    });
 
+    console.log(JSON.parse(hash_encoded_js("password", "salt11bytes", config)));
+  };
+  console.log(argon2Params);
   return (
     <Container ref={containerRef} className="mt-4">
       <h1 className="text-center">Argon2 Visualizer</h1>
@@ -101,7 +105,7 @@ function App() {
             min={MIN_MEMORY}
             placeholder="Memory"
             value={argon2Params.memory}
-            onChange={(e) => setArgon2Param("memory", e.target.value)}
+            onChange={(e) => setArgon2Param("memory", Number(e.target.value))}
           />
         </Form.Group>
 
@@ -112,7 +116,9 @@ function App() {
             min={1}
             placeholder="Iterations"
             value={argon2Params.iterations}
-            onChange={(e) => setArgon2Param("iterations", e.target.value)}
+            onChange={(e) =>
+              setArgon2Param("iterations", Number(e.target.value))
+            }
           />
         </Form.Group>
         <Form.Group className="mb-3">
