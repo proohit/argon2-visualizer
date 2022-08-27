@@ -82,7 +82,7 @@ function App() {
 
     console.log(JSON.parse(hash_encoded_js("password", "salt11bytes", config)));
   };
-  console.log(argon2Params);
+
   return (
     <Container ref={containerRef} className="mt-4">
       <h1 className="text-center">Argon2 Visualizer</h1>
