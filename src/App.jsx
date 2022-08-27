@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FixedSizeGrid } from "react-window";
 import "./App.css";
 import ResizeObserver from "resize-observer-polyfill";
-import { hash_encoded_js, create_default_config } from "rust-argon2";
+import { hash_encoded_js, create_default_config } from "rust-argon2-wasm";
 
 const MIN_MEMORY = 1024;
 const MIN_ITERATIONS = 1;
