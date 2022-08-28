@@ -23,8 +23,8 @@ const FORMULA_T_EQUALS_1 = {
 };
 
 const FORMULA_T_LARGER_1 = {
-  "[i][0]": (i, q) => `G(B[${i}][${q - 1}], B[i'][j'])`,
-  "[i][j]": (i, j) => `G(B[${i}][${j - 1}], B[i'][j'])`,
+  "[i][0]": (i, q, i_, j_) => `G(B[${i}][${q - 1}], B[${i_}][${j_}])`,
+  "[i][j]": (i, j, i_, j_) => `G(B[${i}][${j - 1}], B[${i_}][${j_}])`,
 };
 
 function App() {
@@ -82,7 +82,11 @@ function App() {
       variant: params.variant,
     });
 
-    setResult(JSON.parse(hash_encoded_js("password", "salt11bytes", config)));
+    const hashResult = JSON.parse(
+      hash_encoded_js("password", "salt11bytes", config)
+    );
+    setResult(hashResult);
+    console.log(hashResult);
   };
 
   return (
@@ -225,21 +229,24 @@ const MemoryTable = (props) => {
     if (rowIndex === HEADER_ROW) {
       return columnIndex - 1;
     }
-    let cellRef = `B[${rowIndex - 1}][${columnIndex - 1}]`;
-    let cell = `${cellRef}=`;
+    let cellIndexes = `[${rowIndex - 1}][${columnIndex - 1}]`;
+    let cellRef = `B^${runningParams.currentIteration - 1}${cellIndexes}`;
+    console.log(cellRef);
+    let cellResult = "";
     let i_ = "";
     let j_ = "";
+
     if (result && result.state.hash_map[cellRef]) {
       i_ = result.state.hash_map[cellRef].ref_lane;
       j_ = result.state.hash_map[cellRef].ref_index;
     }
     if (runningParams.currentIteration === 1) {
       if (columnIndex === FIRST_COLUMN) {
-        cell += FORMULA_T_EQUALS_1["[i][0]"](rowIndex - 1);
+        cellResult += FORMULA_T_EQUALS_1["[i][0]"](rowIndex - 1);
       } else if (columnIndex === SECOND_COLUMN) {
-        cell += FORMULA_T_EQUALS_1["[i][1]"](rowIndex - 1);
+        cellResult += FORMULA_T_EQUALS_1["[i][1]"](rowIndex - 1);
       } else {
-        cell += FORMULA_T_EQUALS_1["[i][j]"](
+        cellResult += FORMULA_T_EQUALS_1["[i][j]"](
           rowIndex - 1,
           columnIndex - 1,
           i_,
@@ -248,12 +255,23 @@ const MemoryTable = (props) => {
       }
     } else {
       if (columnIndex === 1) {
-        cell += FORMULA_T_LARGER_1["[i][0]"](rowIndex - 1, q);
+        cellResult += FORMULA_T_LARGER_1["[i][0]"](rowIndex - 1, q, i_, j_);
       } else {
-        cell += FORMULA_T_LARGER_1["[i][j]"](rowIndex - 1, columnIndex - 1);
+        cellResult += FORMULA_T_LARGER_1["[i][j]"](
+          rowIndex - 1,
+          columnIndex - 1,
+          i_,
+          j_
+        );
       }
     }
-    return cell;
+    console.log(cellResult);
+    return (
+      <span>
+        B<sup>{runningParams.currentIteration}</sup>
+        {cellIndexes}={cellResult}
+      </span>
+    );
   };
 
   return (
