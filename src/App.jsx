@@ -208,7 +208,7 @@ const MemoryTable = (props) => {
   const { runningParams, width, result } = props;
 
   const q = useMemo(
-    () => Math.floor(runningParams.memory / runningParams.parallelism),
+    () => Math.floor(runningParams.memory / (4 * runningParams.parallelism)),
     [runningParams.memory, runningParams.parallelism]
   );
 
@@ -282,7 +282,7 @@ const MemoryTable = (props) => {
         rowCount={rowCount}
         height={300}
         width={width}
-        columnWidth={300}
+        columnWidth={250}
         rowHeight={35}
       >
         {({ columnIndex, rowIndex, style }) => (
